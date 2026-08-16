@@ -3,7 +3,7 @@
 
 function sum(a, b) {
   // TODO: Implement this function
-  return a + b;
+  return 0;
 }
 
 module.exports = { sum };
