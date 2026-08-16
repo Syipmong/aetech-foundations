@@ -1,0 +1,45 @@
+name: Auto-Grading
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        id: test
+        run: npm test
+        continue-on-error: true
+
+      - name: Report Status to Academy Backend
+        env:
+          WEBHOOK_URL: "https://backend.aetechlabs.com/api/academy/webhooks/github"
+        run: |
+          OUTCOME="fail"
+          if [ "${{ steps.test.outcome }}" == "success" ]; then
+            OUTCOME="pass"
+          fi
+
+          curl -X POST -H "Content-Type: application/json" \
+               -d "{
+                 \"repository\": \"${{ github.repository }}\",
+                 \"username\": \"${{ github.actor }}\",
+                 \"status\": \"$OUTCOME\",
+                 \"commit\": \"${{ github.sha }}\"
+               }" \
+               $WEBHOOK_URL
